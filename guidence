@@ -1,0 +1,37 @@
+Here’s a complete step-by-step guide for Face Detection and Tracking using OpenCV. We'll cover how to detect faces using Haar cascades and track the detected face in real-time using a webcam.
+
+✅ Requirements:
+Python 3.9.3 (or compatible version)
+OpenCV (pip install opencv-python)
+Haar Cascade XML file (Download: Haar Cascade Files)
+🎯 Step 1: Install OpenCV
+
+pip install opencv-python
+pip install opencv-python-headless
+
+🎯 Step 2: Download Haar Cascade File
+Download the haarcascade_frontalface_default.xml file from the link below:
+
+👉 Download Haar Cascade XML
+
+Place the downloaded XML file in your project folder.
+
+Direct Download from GitHub
+Go to this link:
+👉 Download Haar Cascades from GitHub
+
+Find the file:
+
+Look for haarcascade_frontalface_default.xml.
+Click the file name.
+
+Click the "Raw" button.
+
+Right-click and choose "Save As" to download the file.
+
+🎯 Method 2: Using wget Command (Linux/Mac/Windows)
+Open your terminal or command prompt and run the following command:
+
+bash
+Copy code
+wget https://github.com/opencv/opencv/raw/master/data/haarcascades/haarcascade_frontalface_default.xml
