@@ -4,3 +4,10 @@ pip install opencv-python-headless
 
 Download Haar Cascade File 
         wget https://github.com/opencv/opencv/raw/master/data/haarcascades/haarcascade_frontalface_default.xml
+
+                             Additionl
+For Data Visualization and Reporting, you can implement real-time charts and graphs to visualize the person count over time. Here's how you can approach it:
+
+Install Required Libraries
+             pip install matplotlib
+
