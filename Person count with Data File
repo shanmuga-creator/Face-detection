@@ -1,0 +1,72 @@
+import cv2
+import pandas as pd
+from datetime import datetime
+
+# Load the Haar Cascade Classifier
+face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+
+# Initialize the webcam
+cap = cv2.VideoCapture(0)
+
+# Set the frame size (Optional)
+cap.set(3, 640)  # Width
+cap.set(4, 480)  # Height
+
+# Initialize total person count
+total_person_count = 0
+
+# Check if the Excel file exists to append data
+try:
+    existing_data = pd.read_excel('Person_Count_Log.xlsx')
+except FileNotFoundError:
+    existing_data = pd.DataFrame(columns=['DateTime', 'PersonCount'])
+
+# Initialize an empty DataFrame to store new person count data
+data = pd.DataFrame(columns=['DateTime', 'PersonCount'])
+
+while True:
+    # Read the video frame
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    # Convert to grayscale (Haar works better on grayscale images)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Detect faces in the frame
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+    # Draw rectangles around detected faces and count them
+    person_count = len(faces)
+    total_person_count += person_count
+    for (x, y, w, h) in faces:
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+    # Display the person count on the frame
+    cv2.putText(frame, f'Person Count: {person_count}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+    # Get current date and time
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    # Append the data to the DataFrame
+    data = pd.concat([data, pd.DataFrame([[current_time, person_count]], columns=['DateTime', 'PersonCount'])], ignore_index=True)
+
+    # Display the frame
+    cv2.imshow('Face Detection with Person Count', frame)
+
+    # Break the loop if 'q' is pressed
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Release the webcam and close windows
+cap.release()
+cv2.destroyAllWindows()
+
+# Append new data to the existing Excel file
+summary_data = pd.DataFrame([['Total', total_person_count]], columns=['DateTime', 'PersonCount'])
+data = pd.concat([data, summary_data], ignore_index=True)
+final_data = pd.concat([existing_data, data], ignore_index=True)
+final_data.to_excel('Person_Count_Log.xlsx', index=False)
+
+print("Data saved to Person_Count_Log.xlsx")
+print(f"Total Person Count: {total_person_count}")
