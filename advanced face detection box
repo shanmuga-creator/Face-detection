@@ -1,0 +1,85 @@
+from ultralytics import YOLO
+import cv2
+import pandas as pd
+from datetime import datetime
+
+# Load YOLOv8 model
+model = YOLO('yolov8n.pt')  # Replace with a custom face model if available
+
+# Initialize the webcam
+cap = cv2.VideoCapture(1)
+
+# Set the frame size
+cap.set(3, 640)  # Width
+cap.set(4, 640)  # Height
+
+# Initialize data and variables
+person_count_data = []
+detected_faces = []  # To store unique faces detected
+total_person_count = 0
+
+def save_to_excel(data, total_person_count):
+    try:
+        existing_data = pd.read_excel('Person_Count_Log.xlsx')
+    except FileNotFoundError:
+        existing_data = pd.DataFrame(columns=['DateTime', 'PersonCount'])
+
+    # Append new data to the existing Excel file
+    new_data = pd.DataFrame(data)
+    summary_data = pd.DataFrame([{'DateTime': 'Total', 'PersonCount': total_person_count}])
+    
+    data = pd.concat([new_data, summary_data], ignore_index=True)
+    final_data = pd.concat([existing_data, data], ignore_index=True)
+    final_data.to_excel('Person_Count_Log.xlsx', index=False)
+
+    print("Data saved to Person_Count_Log.xlsx")
+    print(f"Total Unique Person Count: {total_person_count}")
+
+print("YOLOv8 Unique Person Detection Started. Press 'q' to exit.")
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        print("Failed to grab frame")
+        break
+
+    # Perform face detection using YOLOv8
+    results = model(frame, stream=True)  # Streaming inference for faster processing
+    current_faces = []
+
+    for result in results:
+        for box in result.boxes:
+            # Get bounding box coordinates
+            x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+            conf = box.conf[0].item()  # Confidence score
+            cls = int(box.cls[0].item())  # Class index
+
+            if cls == 0 and conf > 0.5:  # Assuming '0' is the class for "person"
+                # Check if the face is already detected
+                if not any(abs(x1 - fx) < 50 and abs(y1 - fy) < 50 for fx, fy, fw, fh in detected_faces):
+                    detected_faces.append((x1, y1, x2, y2))  # Add the face to detected list
+                    total_person_count += 1  # Increment unique person count
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    person_count_data.append({"DateTime": timestamp, "PersonCount": total_person_count})
+
+                # Draw rectangle around the detected face
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+    # Display the unique person count on the frame
+    cv2.putText(frame, f"Unique People Count: {total_person_count}", (10, 50),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+
+    # Show the frame
+    cv2.imshow("YOLOv8 Unique Person Detection", frame)
+
+    # Exit on 'q'
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+print("Detection completed. Saving data...")
+save_to_excel(person_count_data, total_person_count)
+
+# Release resources
+cap.release()
+cv2.destroyAllWindows()
+print("Data saved to Person_Count_Log.xlsx")
